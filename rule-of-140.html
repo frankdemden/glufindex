@@ -1,0 +1,641 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<title>Spray window — rule of 140</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;800&family=Inter+Tight:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --night:#0D1A18; --panel:#152524; --panel2:#1C302E; --rule:#27443F;
+    --text:#E6EFEA; --muted:#8CA8A0; --faint:#5B7A73;
+    --go:#4FB86B; --mar:#E3A63C; --hold:#D0604C; --water:#57A9CB;
+    --display:'Archivo',system-ui,sans-serif;
+    --body:'Inter Tight',system-ui,sans-serif;
+    --mono:'IBM Plex Mono',ui-monospace,monospace;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;background:var(--night);color:var(--text);font-family:var(--body)}
+  body{padding:20px 16px calc(40px + env(safe-area-inset-bottom));max-width:640px;margin:0 auto}
+  :focus-visible{outline:2px solid var(--water);outline-offset:2px}
+  .tick{font-variant-numeric:tabular-nums}
+  .card{background:var(--panel);border:1px solid var(--rule);border-radius:24px;padding:16px;margin-top:16px}
+  .eyebrow{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;color:var(--muted)}
+  button{font-family:inherit;border:none;cursor:pointer;color:var(--text)}
+  .pill{background:var(--panel2);border-radius:999px;padding:7px 12px;font-size:12px;display:inline-flex;align-items:center;gap:6px}
+  .hide{display:none !important}
+
+  header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+  header .kicker{font-family:var(--mono);font-size:10px;letter-spacing:.22em;color:var(--faint)}
+  h1{font-family:var(--display);font-weight:800;font-size:26px;line-height:1.05;letter-spacing:-.02em;margin:6px 0 0}
+  #placeBtn{background:var(--panel);border:1px solid var(--rule);border-radius:999px;padding:9px 12px;font-size:13px;
+    display:flex;align-items:center;gap:8px;flex-shrink:0;max-width:56%}
+  #placeName{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+  input[type=search],input[type=number]{width:100%;background:var(--night);border:none;outline:none;color:var(--text);
+    font:inherit;font-size:14px;padding:10px 12px;border-radius:12px}
+  .hit{display:block;width:100%;text-align:left;background:var(--panel2);border-radius:12px;padding:9px 12px;
+    font-size:13px;margin-top:8px}
+  .hit span{color:var(--faint)}
+
+  #big{font-family:var(--display);font-weight:800;font-size:76px;line-height:.85;letter-spacing:-.045em}
+  #big sup{font-size:24px;margin-left:2px;letter-spacing:0}
+  #verdictWord{font-family:var(--display);font-weight:600;font-size:20px}
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:16px}
+  .stat{background:var(--panel2);border-radius:12px;padding:10px 12px}
+  .stat .lab{font-size:10.5px;color:var(--muted)}
+  .stat .val{font-family:var(--display);font-weight:600;font-size:20px;letter-spacing:-.02em;margin-top:4px}
+  .stat .val i{font-style:normal;font-size:11px;color:var(--muted);margin-left:2px}
+
+  #strip{position:relative;height:96px;display:flex;align-items:flex-end;margin-top:12px;touch-action:none;cursor:col-resize}
+  #strip .bar{flex:1;height:100%;display:flex;align-items:flex-end;position:relative}
+  #strip .bar > i{display:block;width:100%;font-style:normal;transition:height .22s cubic-bezier(.2,.8,.2,1),opacity .12s}
+  #strip .midnight{position:absolute;top:0;bottom:0;left:0;width:1px;background:var(--rule);opacity:.7}
+  #threshold{position:absolute;left:0;right:0;height:1px;background:var(--rule)}
+  #nowRule{position:absolute;top:-4px;bottom:-4px;width:1px;background:var(--text);opacity:.55}
+  #axis{position:relative;height:13px;margin-top:6px;font-family:var(--mono);font-size:9.5px;color:var(--faint);letter-spacing:.08em}
+  #axis span{position:absolute}
+  .key{display:flex;flex-wrap:wrap;gap:4px 16px;margin-top:12px;font-size:11px;color:var(--muted);align-items:center}
+  .key i{width:8px;height:8px;border-radius:2px;display:inline-block;margin-right:6px}
+
+  .advice{display:flex;gap:12px;align-items:flex-start;background:var(--panel);border:1px solid var(--rule);
+    border-radius:16px;padding:12px 16px;margin-top:8px}
+  .advice .dot{width:9px;height:9px;border-radius:999px;margin-top:5px;flex-shrink:0}
+  .advice .t{font-size:13.5px;font-weight:500}
+  .advice .b{font-size:12px;color:var(--muted);margin-top:2px}
+
+  .window{display:flex;justify-content:space-between;align-items:center;width:100%;text-align:left;
+    background:var(--panel2);border-radius:12px;padding:10px 12px;margin-top:8px}
+  .window .w1{font-family:var(--display);font-weight:600;font-size:15px}
+  .window .w2{font-size:11.5px;color:var(--muted);margin-top:1px}
+  .window .pc{font-family:var(--mono);font-size:15px;color:var(--go)}
+
+  dl{margin:12px 0 0;font-size:12.5px}
+  .row{display:flex;justify-content:space-between;gap:16px;padding:3px 0}
+  .row dt{color:var(--faint)}
+  .row dd{margin:0;font-family:var(--mono);font-size:11.5px;text-align:right}
+  .note{font-size:11.5px;color:var(--faint);line-height:1.55;margin:12px 0 0}
+
+  .slider{margin-bottom:14px}
+  .slider .top{display:flex;justify-content:space-between;align-items:baseline}
+  .slider .top b{font-family:var(--mono);font-size:14px;font-weight:400}
+  input[type=range]{width:100%;margin-top:6px;accent-color:var(--go)}
+
+  #banner{border-color:var(--hold)}
+  #spin{width:18px;height:18px;border:2px solid var(--rule);border-top-color:var(--water);border-radius:999px;
+    animation:sp 1s linear infinite;margin:0 auto}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  @media (prefers-reduced-motion:reduce){*{animation:none !important;transition:none !important}}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="kicker">RULE OF 140 · GLUFOSINATE</div>
+    <h1>Spray window</h1>
+  </div>
+  <button id="placeBtn" aria-expanded="false">📍 <span id="placeName">…</span> ▾</button>
+</header>
+
+<!-- place picker -->
+<section id="picker" class="card hide">
+  <input type="search" id="q" placeholder="Search town or district" autocomplete="off">
+  <div id="hits"></div>
+  <p id="searchNote" class="note hide" style="color:var(--mar)">Search needs a connection. Use a saved place below.</p>
+  <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:8px">
+    <button class="pill" id="useGps" style="color:var(--water)">Use my location</button>
+    <button class="pill preset" data-lat="-31.8886" data-lon="116.7683" data-name="York, WA" style="color:var(--muted)">York, WA</button>
+    <button class="pill preset" data-lat="-33.8608" data-lon="115.0028" data-name="Gracetown, WA" style="color:var(--muted)">Gracetown, WA</button>
+    <button class="pill preset" data-lat="-31.9749" data-lon="116.0578" data-name="Kalamunda, WA" style="color:var(--muted)">Kalamunda, WA</button>
+  </div>
+</section>
+
+<!-- loading -->
+<section id="loading" style="margin-top:44px;text-align:center;color:var(--faint)">
+  <div id="spin"></div>
+  <div id="status" style="font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;margin-top:12px">STARTING…</div>
+</section>
+
+<!-- no network -->
+<section id="banner" class="card hide">
+  <div class="eyebrow" style="color:var(--hold)">NO LIVE DATA</div>
+  <p style="font-size:13px;color:var(--muted);line-height:1.5;margin:8px 0 0">
+    The weather feed would not answer. If you are viewing this inside a chat window, that sandbox blocks outside
+    connections — save the file and open it in a browser. Meanwhile you can enter readings by hand.
+  </p>
+  <p id="bannerDetail" class="note" style="font-family:var(--mono)"></p>
+  <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+    <button class="pill" id="retry">Try again</button>
+    <button class="pill" id="goManual" style="color:var(--water)">Enter readings by hand</button>
+  </div>
+</section>
+
+<!-- verdict -->
+<section id="verdict" class="card hide" style="padding:16px 20px 20px">
+  <div style="display:flex;justify-content:space-between;align-items:center">
+    <div style="display:flex;align-items:center;gap:8px">
+      <span id="verdictDot" style="width:9px;height:9px;border-radius:999px;display:inline-block"></span>
+      <span class="eyebrow" id="whenLabel">NOW</span>
+    </div>
+    <button class="pill hide" id="backToNow" style="color:var(--water);padding:5px 10px;font-size:11px">Back to now</button>
+  </div>
+
+  <div style="display:flex;align-items:flex-end;gap:12px;margin-top:8px">
+    <div id="big" class="tick">–<sup>%</sup></div>
+    <div style="padding-bottom:6px">
+      <div id="verdictWord">—</div>
+      <div id="verdictSub" style="font-size:12px;color:var(--muted);margin-top:2px"></div>
+    </div>
+  </div>
+
+  <div class="stats" id="stats">
+    <div class="stat"><div class="lab">Air temp</div><div class="val tick"><span id="sTemp">–</span><i>°C</i></div></div>
+    <div class="stat"><div class="lab">Humidity</div><div class="val tick"><span id="sRh">–</span><i>%</i></div></div>
+    <div class="stat"><div class="lab">Wind</div><div class="val tick"><span id="sWind">–</span><i>km/h</i></div></div>
+  </div>
+
+  <div id="manualBox" class="hide" style="margin-top:16px">
+    <div class="slider">
+      <div class="top"><span style="font-size:12px;color:var(--muted)">Air temp</span><b><span id="mTempV">20</span>°C</b></div>
+      <input type="range" id="mTemp" min="0" max="45" step="0.5" value="20">
+    </div>
+    <div class="slider">
+      <div class="top"><span style="font-size:12px;color:var(--muted)">Humidity</span><b><span id="mRhV">60</span>%</b></div>
+      <input type="range" id="mRh" min="5" max="99" step="1" value="60">
+    </div>
+    <button class="pill" id="leaveManual" style="color:var(--water)">Try live data again</button>
+  </div>
+
+  <button id="mathBtn" style="background:none;padding:0;margin-top:14px;width:100%;display:flex;
+    justify-content:space-between;font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;color:var(--faint)">
+    <span>HOW THIS IS WORKED OUT</span><span>▾</span>
+  </button>
+  <div id="mathBox" class="hide" style="background:var(--night);border-radius:12px;padding:12px;margin-top:8px;
+    font-family:var(--mono);font-size:11.5px;color:var(--muted);line-height:1.7">
+    <div>( T°F + RH ) ÷ 140 × 100</div>
+    <div id="mathLine" style="color:var(--text)"></div>
+    <div id="mathNote" style="margin-top:8px;font-family:var(--body);color:var(--faint)"></div>
+  </div>
+</section>
+
+<!-- strip -->
+<section id="stripCard" class="card hide">
+  <div style="display:flex;justify-content:space-between;align-items:baseline">
+    <span class="eyebrow">HOUR STRIP</span>
+    <span style="font-size:11px;color:var(--faint)">Drag to read any hour</span>
+  </div>
+  <div id="strip" role="slider" tabindex="0" aria-label="Hour selector">
+    <div id="threshold"></div><div id="nowRule"></div>
+  </div>
+  <div id="axis"></div>
+  <div class="key">
+    <span><i style="background:var(--go)"></i>≥ 100 %</span>
+    <span><i style="background:var(--mar)"></i>90–99 %</span>
+    <span><i style="background:var(--hold)"></i>&lt; 90 %</span>
+    <span style="color:var(--faint)">Solid = observed · Faded = forecast</span>
+  </div>
+</section>
+
+<!-- chart -->
+<section id="chartCard" class="card hide">
+  <span class="eyebrow">TEMPERATURE &amp; HUMIDITY</span>
+  <div id="chart" style="margin-top:12px"></div>
+</section>
+
+<div id="advice"></div>
+
+<!-- windows -->
+<section id="windowsCard" class="card hide">
+  <span class="eyebrow">NEXT 48 HOURS</span>
+  <div id="windows"></div>
+</section>
+
+<!-- provenance -->
+<section id="sourceCard" class="card hide">
+  <span class="eyebrow">WHERE THIS COMES FROM</span>
+  <dl id="sourceRows"></dl>
+  <p class="note" id="sourceNote"></p>
+  <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+    <button class="pill" id="refresh">Refresh</button>
+    <button class="pill" id="manualFromSource" style="color:var(--water)">Use my own readings</button>
+  </div>
+</section>
+
+<p class="note" style="margin-top:20px">
+  The 140 rule is a rule of thumb for contact herbicide uptake, not a label instruction.
+  The product label, permit conditions and your own drift obligations always come first.
+</p>
+
+<script>
+(function(){
+"use strict";
+
+/* ── maths ─────────────────────────────────────────── */
+var cToF = function(c){ return c*9/5+32; };
+var index140 = function(t,rh){ return (cToF(t)+rh)/140*100; };
+function wetBulb(t,RH){
+  var r = Math.max(5, Math.min(99, RH));
+  return t*Math.atan(0.151977*Math.sqrt(r+8.313659)) + Math.atan(t+r) - Math.atan(r-1.676331)
+       + 0.00391838*Math.pow(r,1.5)*Math.atan(0.023101*r) - 4.686035;
+}
+var deltaT = function(t,rh){ return t - wetBulb(t,rh); };
+function band(v){
+  if(v>=100) return {c:'var(--go)', label:'Spray', sub:'Above the 140 threshold'};
+  if(v>=90)  return {c:'var(--mar)', label:'Marginal', sub:'Just under threshold'};
+  return {c:'var(--hold)', label:'Hold', sub:'Too dry or too cool'};
+}
+function haversine(a,b,c,d){
+  var R=6371,p=Math.PI/180,dLat=(c-a)*p,dLon=(d-b)*p;
+  var h=Math.pow(Math.sin(dLat/2),2)+Math.cos(a*p)*Math.cos(c*p)*Math.pow(Math.sin(dLon/2),2);
+  return 2*R*Math.asin(Math.sqrt(h));
+}
+var $ = function(id){ return document.getElementById(id); };
+var pad = function(n){ return String(n).padStart(2,'0'); };
+
+/* ── state ─────────────────────────────────────────── */
+var S = { place:null, feed:null, rows:null, now:0, scrub:null, manual:null };
+
+/* ── storage (optional) ────────────────────────────── */
+function save(p){ try{ localStorage.setItem('rule140.place', JSON.stringify(p)); }catch(e){} }
+function restore(){ try{ return JSON.parse(localStorage.getItem('rule140.place')); }catch(e){ return null; } }
+
+/* ── data ──────────────────────────────────────────── */
+function fetchWeather(p){
+  var u = 'https://api.open-meteo.com/v1/forecast?latitude='+p.lat+'&longitude='+p.lon
+        + '&hourly=temperature_2m,relative_humidity_2m,wind_speed_10m,precipitation'
+        + '&current=temperature_2m,relative_humidity_2m,wind_speed_10m,precipitation'
+        + '&past_days=2&forecast_days=3&wind_speed_unit=kmh&timeformat=unixtime&timezone=auto';
+  return fetch(u).then(function(r){
+    if(!r.ok) throw new Error('Weather service returned '+r.status);
+    return r.json();
+  }).then(function(j){
+    var H = j.hourly;
+    if(!H || !H.time || !H.time.length) throw new Error('No hourly data came back');
+    var nowSec = (j.current && j.current.time) || Math.floor(Date.now()/1000);
+    var off = j.utc_offset_seconds || 0;
+    var rows = [];
+    for(var i=0;i<H.time.length;i++){
+      var t=H.temperature_2m[i], rh=H.relative_humidity_2m[i], ts=H.time[i];
+      if(t==null||rh==null) continue;
+      if(ts < nowSec-48*3600 || ts > nowSec+48*3600) continue;
+      var local = new Date((ts+off)*1000);
+      rows.push({
+        utc:ts, temp:t, rh:rh,
+        wind:H.wind_speed_10m[i]||0, rain:H.precipitation[i]||0,
+        idx:index140(t,rh), dt:deltaT(t,rh),
+        past: ts < nowSec-1800,
+        hour: local.getUTCHours(),
+        day: local.toLocaleDateString('en-AU',{weekday:'short',timeZone:'UTC'}),
+        offset: Math.round((ts-nowSec)/3600)
+      });
+    }
+    if(rows.length<3) throw new Error('Not enough hours came back');
+    rows.forEach(function(r,i){ r.i=i; });
+    var nowIdx = rows.findIndex(function(r){ return !r.past; });
+    return {
+      rows: rows, now: nowIdx<0 ? rows.length-1 : nowIdx,
+      live: (j.current && j.current.temperature_2m!=null) ? {
+        temp:j.current.temperature_2m, rh:j.current.relative_humidity_2m,
+        wind:j.current.wind_speed_10m||0, rain:j.current.precipitation||0
+      } : null,
+      src: {
+        lat:j.latitude, lon:j.longitude, elev:j.elevation, tz:j.timezone_abbreviation,
+        dist: haversine(p.lat,p.lon,j.latitude,j.longitude)
+      }
+    };
+  });
+}
+
+function load(p){
+  if(!p) return;
+  S.place=p; S.scrub=null; S.manual=null; S.feed=null;
+  $('placeName').textContent = p.name;
+  show('loading',true); show('banner',false);
+  ['verdict','stripCard','chartCard','windowsCard','sourceCard'].forEach(function(id){ show(id,false); });
+  $('advice').innerHTML='';
+  $('status').textContent='READING THE FORECAST…';
+  fetchWeather(p).then(function(f){
+    S.feed=f; S.rows=f.rows; S.now=f.now; save(p);
+    show('loading',false); renderAll();
+  }).catch(function(e){
+    show('loading',false);
+    $('bannerDetail').textContent = e.message || String(e);
+    show('banner',true);
+  });
+}
+
+/* ── current hour on show ──────────────────────────── */
+function current(){
+  if(S.manual){
+    var m=S.manual;
+    return {temp:m.temp, rh:m.rh, wind:null, rain:0, idx:index140(m.temp,m.rh), dt:deltaT(m.temp,m.rh), manual:true};
+  }
+  if(!S.rows) return null;
+  var i = S.scrub==null ? S.now : Math.max(0,Math.min(S.rows.length-1,S.scrub));
+  var r = S.rows[i];
+  if(S.scrub==null && S.feed && S.feed.live){
+    var L=S.feed.live;
+    return {temp:L.temp, rh:L.rh, wind:L.wind, rain:L.rain, idx:index140(L.temp,L.rh),
+            dt:deltaT(L.temp,L.rh), live:true, i:r.i, hour:r.hour, day:r.day};
+  }
+  return r;
+}
+
+/* ── render ────────────────────────────────────────── */
+function show(id,on){ $(id).classList.toggle('hide', !on); }
+
+function renderAll(){
+  var c = current();
+  if(!c) return;
+  renderVerdict(c);
+  show('verdict',true);
+  var live = !c.manual && S.rows;
+  show('stripCard',!!live); show('chartCard',!!live); show('windowsCard',!!live); show('sourceCard',true);
+  if(live){ renderStrip(); renderChart(); renderWindows(); }
+  renderAdvice(c);
+  renderSource(c);
+}
+
+function renderVerdict(c){
+  var b = band(c.idx);
+  $('big').innerHTML = Math.round(c.idx)+'<sup>%</sup>';
+  $('big').style.color = b.c;
+  $('verdictDot').style.background = b.c;
+  $('verdictWord').textContent = b.label;
+  $('verdictWord').style.color = b.c;
+  $('verdictSub').textContent = b.sub;
+  $('whenLabel').textContent = c.manual ? 'YOUR READINGS' : c.live ? 'NOW' : (pad(c.hour)+':00 '+c.day.toUpperCase());
+  show('backToNow', S.scrub!=null && !c.manual);
+  show('stats', !c.manual);
+  show('manualBox', !!c.manual);
+  if(!c.manual){
+    $('sTemp').textContent = c.temp.toFixed(1);
+    $('sRh').textContent = Math.round(c.rh);
+    $('sWind').textContent = Math.round(c.wind);
+  }
+  $('mathLine').textContent = '( '+cToF(c.temp).toFixed(1)+' + '+Math.round(c.rh)+' ) ÷ 140 = '
+    + (c.idx/100).toFixed(3)+' → '+Math.round(c.idx)+'%';
+  $('mathNote').textContent = 'The rule is written in Fahrenheit, so '+c.temp.toFixed(1)
+    + ' °C is converted for the sum only. Everything else here stays metric.';
+}
+
+function renderStrip(){
+  var el=$('strip'), rows=S.rows;
+  Array.prototype.slice.call(el.querySelectorAll('.bar')).forEach(function(n){ n.remove(); });
+  $('threshold').style.bottom = ((100-55)/95*100)+'%';
+  var nowPct = S.now/(rows.length-1)*100;
+  $('nowRule').style.left = nowPct+'%';
+  var sel = S.scrub==null ? S.now : S.scrub;
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  rows.forEach(function(r,i){
+    var wrap=document.createElement('div'); wrap.className='bar';
+    var bar=document.createElement('i');
+    var h=Math.max(3, Math.min(1,(r.idx-55)/95)*96);
+    bar.style.background=band(r.idx).c;
+    bar.style.opacity = i===sel ? 1 : (r.past?0.85:0.42);
+    if(i===sel) bar.style.borderTop='2px solid var(--text)';
+    bar.style.height = reduce ? h+'px' : '0px';
+    wrap.appendChild(bar);
+    if(r.hour===0){ var m=document.createElement('div'); m.className='midnight'; wrap.appendChild(m); }
+    el.appendChild(wrap);
+    if(!reduce) setTimeout(function(){ bar.style.height=h+'px'; }, 12*i/3);
+  });
+  el.setAttribute('aria-valuemin',0);
+  el.setAttribute('aria-valuemax',rows.length-1);
+  el.setAttribute('aria-valuenow',sel);
+  $('axis').innerHTML =
+    '<span style="left:0">'+rows[0].offset+' H</span>'+
+    '<span style="left:'+nowPct+'%;transform:translateX(-50%);color:var(--text)">NOW</span>'+
+    '<span style="right:0">+'+rows[rows.length-1].offset+' H</span>';
+}
+
+function renderChart(){
+  var rows=S.rows, W=560, H=170, padL=34, padR=34, padT=10, padB=22;
+  var temps=rows.map(function(r){return r.temp;});
+  var tMin=Math.floor(Math.min.apply(null,temps)-1), tMax=Math.ceil(Math.max.apply(null,temps)+1);
+  var x=function(i){ return padL + i/(rows.length-1)*(W-padL-padR); };
+  var yT=function(v){ return padT + (1-(v-tMin)/(tMax-tMin))*(H-padT-padB); };
+  var yR=function(v){ return padT + (1-v/100)*(H-padT-padB); };
+  var line=function(f,key){ return rows.map(function(r,i){ return (i?'L':'M')+x(i).toFixed(1)+' '+f(r[key]).toFixed(1); }).join(' '); };
+  var grid='', i;
+  for(i=0;i<=3;i++){
+    var gy=padT+i/3*(H-padT-padB);
+    grid+='<line x1="'+padL+'" x2="'+(W-padR)+'" y1="'+gy+'" y2="'+gy+'" stroke="var(--rule)" stroke-dasharray="2 4"/>';
+    grid+='<text x="'+(padL-6)+'" y="'+(gy+3)+'" text-anchor="end" fill="var(--mar)" font-size="10" font-family="var(--mono)">'
+        + Math.round(tMax-(tMax-tMin)*i/3)+'°</text>';
+    grid+='<text x="'+(W-padR+6)+'" y="'+(gy+3)+'" fill="var(--water)" font-size="10" font-family="var(--mono)">'
+        + Math.round(100-100*i/3)+'%</text>';
+  }
+  var ticks='';
+  [0,24,48,72,96].forEach(function(k){
+    if(k>=rows.length) return;
+    var lbl = rows[k].offset===0 ? 'now' : (rows[k].offset>0?'+':'')+rows[k].offset+'h';
+    ticks+='<text x="'+x(k)+'" y="'+(H-6)+'" text-anchor="middle" fill="var(--faint)" font-size="10" font-family="var(--mono)">'+lbl+'</text>';
+  });
+  $('chart').innerHTML =
+    '<svg viewBox="0 0 '+W+' '+H+'" width="100%" height="'+H+'" preserveAspectRatio="none" role="img" '+
+    'aria-label="Temperature and humidity, past 48 hours and next 48 hours">'
+    + grid + ticks
+    + '<line x1="'+x(S.now)+'" x2="'+x(S.now)+'" y1="'+padT+'" y2="'+(H-padB)+'" stroke="var(--text)" opacity=".5"/>'
+    + '<path d="'+line(yT,'temp')+'" fill="none" stroke="var(--mar)" stroke-width="2"/>'
+    + '<path d="'+line(yR,'rh')+'" fill="none" stroke="var(--water)" stroke-width="2"/>'
+    + '</svg>';
+}
+
+function renderAdvice(c){
+  var out='';
+  function card(state,title,body){
+    var col = state==='ok'?'var(--go)': state==='bad'?'var(--hold)':'var(--mar)';
+    return '<div class="advice"><span class="dot" style="background:'+col+'"></span><div>'
+         + '<div class="t">'+title+'</div><div class="b">'+body+'</div></div></div>';
+  }
+  if(c.wind!=null){
+    out += c.wind<3  ? card('bad','Wind '+Math.round(c.wind)+' km/h','Below 3 km/h — surface inversion risk. Hold off.')
+         : c.wind>20 ? card('warn','Wind '+Math.round(c.wind)+' km/h','Above 20 km/h — drift risk is high.')
+         : card('ok','Wind '+Math.round(c.wind)+' km/h','In the workable 3–20 km/h range.');
+  }
+  out += c.dt>10 ? card('bad','Delta T '+c.dt.toFixed(1),'Above 10 — droplets evaporate before they land.')
+       : c.dt<2  ? card('warn','Delta T '+c.dt.toFixed(1),'Under 2 — very slow drying, watch for run-off.')
+       : c.dt>8  ? card('warn','Delta T '+c.dt.toFixed(1),'Between 8 and 10 — workable, but drying fast.')
+       : card('ok','Delta T '+c.dt.toFixed(1),'Inside the preferred 2–8 range.');
+  if(!c.manual && S.rows){
+    var r6=0, i0=(c.i||S.now)+1;
+    for(var i=i0;i<Math.min(i0+6,S.rows.length);i++) r6+=S.rows[i].rain;
+    out += r6>=1   ? card('bad', r6.toFixed(1)+' mm forecast, next 6 h','Glufosinate wants roughly 4–6 h rain-free to take up.')
+         : r6>=0.2 ? card('warn',r6.toFixed(1)+' mm forecast, next 6 h','Glufosinate wants roughly 4–6 h rain-free to take up.')
+         : card('ok','0.0 mm forecast, next 6 h','Clear run for uptake.');
+  }
+  if(c.temp>28) out += card('warn',c.temp.toFixed(1)+' °C','Hot. Weed stress and evaporation cut efficacy even when the sum clears 140.');
+  $('advice').innerHTML = out;
+}
+
+function renderWindows(){
+  var rows=S.rows, runs=[], run=null;
+  for(var i=S.now;i<rows.length;i++){
+    var r=rows[i], ok = r.idx>=100 && r.wind>=3 && r.wind<=20 && r.rain<0.2;
+    if(ok){ if(!run) run={s:r,e:r,peak:r.idx}; else { run.e=r; run.peak=Math.max(run.peak,r.idx); } }
+    else if(run){ runs.push(run); run=null; }
+  }
+  if(run) runs.push(run);
+  runs = runs.filter(function(w){ return w.e.i>w.s.i; }).slice(0,4);
+  if(!runs.length){
+    $('windows').innerHTML = '<p style="font-size:13px;color:var(--muted);margin:8px 0 0">'
+      + 'No hour ahead clears 140 with workable wind. Watch the strip for the closest run.</p>';
+    return;
+  }
+  $('windows').innerHTML = runs.map(function(w){
+    return '<button class="window" data-i="'+w.s.i+'"><div><div class="w1">'+w.s.day+' '+pad(w.s.hour)
+      + ':00 – '+pad(w.e.hour)+':00</div><div class="w2">'+(w.e.i-w.s.i+1)
+      + ' h · wind and rain both clear</div></div><div class="pc tick">'+Math.round(w.peak)+'%</div></button>';
+  }).join('');
+  Array.prototype.slice.call($('windows').querySelectorAll('.window')).forEach(function(btn){
+    btn.addEventListener('click', function(){ S.scrub=+btn.dataset.i; renderAll(); });
+  });
+}
+
+function renderSource(c){
+  if(c.manual){
+    $('sourceRows').innerHTML='';
+    $('sourceNote').textContent='Your own readings. Nothing here came off a network.';
+    show('manualFromSource',false);
+    return;
+  }
+  show('manualFromSource',true);
+  var s=S.feed.src;
+  var row=function(k,v){ return '<div class="row"><dt>'+k+'</dt><dd class="tick">'+v+'</dd></div>'; };
+  $('sourceRows').innerHTML =
+      row('Source','Open-Meteo model grid cell')
+    + row('Grid point', s.lat.toFixed(3)+', '+s.lon.toFixed(3))
+    + row('Distance from you', s.dist.toFixed(1)+' km')
+    + row('Grid elevation', Math.round(s.elev)+' m')
+    + row('Time zone', s.tz);
+  $('sourceNote').textContent = 'This is a model cell, not one physical station — it blends observations from '
+    + 'whatever gauges, radar and satellite passes cover the area. On-farm readings will differ, so treat it as '
+    + 'a plan, not a record. Log your actual conditions at the tank.';
+}
+
+/* ── interaction ───────────────────────────────────── */
+$('placeBtn').addEventListener('click', function(){
+  var on = $('picker').classList.contains('hide');
+  show('picker', on);
+  $('placeBtn').setAttribute('aria-expanded', on);
+  if(on) $('q').focus();
+});
+
+var qTimer=null;
+$('q').addEventListener('input', function(){
+  clearTimeout(qTimer);
+  var v=$('q').value.trim();
+  if(v.length<3){ $('hits').innerHTML=''; return; }
+  qTimer=setTimeout(function(){
+    fetch('https://geocoding-api.open-meteo.com/v1/search?name='+encodeURIComponent(v)+'&count=6&language=en&format=json')
+      .then(function(r){ return r.json(); })
+      .then(function(j){
+        show('searchNote',false);
+        $('hits').innerHTML = (j.results||[]).map(function(h){
+          return '<button class="hit" data-lat="'+h.latitude+'" data-lon="'+h.longitude+'" data-name="'
+            + h.name + (h.admin1?', '+h.admin1:'') + '">'+h.name
+            + '<span>'+(h.admin1?', '+h.admin1:'')+' · '+h.country_code+'</span></button>';
+        }).join('');
+        Array.prototype.slice.call($('hits').querySelectorAll('.hit')).forEach(bindPlace);
+      })
+      .catch(function(){ $('hits').innerHTML=''; show('searchNote',true); });
+  },300);
+});
+
+function bindPlace(btn){
+  btn.addEventListener('click', function(){
+    show('picker',false); $('q').value=''; $('hits').innerHTML='';
+    load({name:btn.dataset.name, lat:+btn.dataset.lat, lon:+btn.dataset.lon});
+  });
+}
+Array.prototype.slice.call(document.querySelectorAll('.preset')).forEach(bindPlace);
+
+$('useGps').addEventListener('click', function(){
+  if(!navigator.geolocation) return;
+  $('status').textContent='FINDING YOU…'; show('picker',false);
+  navigator.geolocation.getCurrentPosition(function(pos){
+    locate(pos.coords.latitude, pos.coords.longitude);
+  }, function(){ $('bannerDetail').textContent='Location permission denied.'; show('banner',true); });
+});
+
+function locate(lat,lon){
+  var fb = lat.toFixed(3)+', '+lon.toFixed(3);
+  fetch('https://api.bigdatacloud.net/data/reverse-geocode-client?latitude='+lat+'&longitude='+lon+'&localityLanguage=en')
+    .then(function(r){ return r.json(); })
+    .then(function(j){
+      var bits=[j.locality||j.city, j.principalSubdivision].filter(Boolean);
+      load({name: bits.length?bits.join(', '):fb, lat:lat, lon:lon});
+    })
+    .catch(function(){ load({name:fb, lat:lat, lon:lon}); });
+}
+
+var strip=$('strip');
+function scrubAt(clientX){
+  if(!S.rows) return;
+  var b=strip.getBoundingClientRect();
+  var f=Math.max(0,Math.min(1,(clientX-b.left)/b.width));
+  S.scrub=Math.round(f*(S.rows.length-1));
+  renderAll();
+}
+strip.addEventListener('pointerdown', function(e){ strip.setPointerCapture(e.pointerId); scrubAt(e.clientX); });
+strip.addEventListener('pointermove', function(e){ if(e.buttons) scrubAt(e.clientX); });
+strip.addEventListener('keydown', function(e){
+  if(!S.rows) return;
+  var cur = S.scrub==null ? S.now : S.scrub;
+  if(e.key==='ArrowRight'){ e.preventDefault(); S.scrub=Math.min(S.rows.length-1,cur+1); renderAll(); }
+  if(e.key==='ArrowLeft'){ e.preventDefault(); S.scrub=Math.max(0,cur-1); renderAll(); }
+});
+$('backToNow').addEventListener('click', function(){ S.scrub=null; renderAll(); });
+
+$('mathBtn').addEventListener('click', function(){
+  var on=$('mathBox').classList.contains('hide');
+  show('mathBox',on);
+  $('mathBtn').lastElementChild.textContent = on ? '▴' : '▾';
+});
+
+function enterManual(){
+  var c = current();
+  var t = c && !c.manual ? Math.round(c.temp*2)/2 : 20;
+  var h = c && !c.manual ? Math.round(c.rh) : 60;
+  S.manual={temp:t, rh:h};
+  $('mTemp').value=t; $('mTempV').textContent=t;
+  $('mRh').value=h;   $('mRhV').textContent=h;
+  show('banner',false);
+  renderAll();
+}
+$('goManual').addEventListener('click', enterManual);
+$('manualFromSource').addEventListener('click', enterManual);
+$('mTemp').addEventListener('input', function(){
+  S.manual.temp=parseFloat(this.value); $('mTempV').textContent=this.value; renderVerdict(current()); renderAdvice(current());
+});
+$('mRh').addEventListener('input', function(){
+  S.manual.rh=parseFloat(this.value); $('mRhV').textContent=this.value; renderVerdict(current()); renderAdvice(current());
+});
+$('leaveManual').addEventListener('click', function(){ S.manual=null; load(S.place); });
+$('retry').addEventListener('click', function(){ load(S.place); });
+$('refresh').addEventListener('click', function(){ load(S.place); });
+
+/* ── start ─────────────────────────────────────────── */
+var saved = restore();
+if(saved){ load(saved); }
+else if(navigator.geolocation){
+  $('status').textContent='FINDING YOU…';
+  var settled=false;
+  var t=setTimeout(function(){ if(!settled){ settled=true; load({name:'York, WA', lat:-31.8886, lon:116.7683}); } }, 7000);
+  navigator.geolocation.getCurrentPosition(
+    function(pos){ if(settled) return; settled=true; clearTimeout(t); locate(pos.coords.latitude,pos.coords.longitude); },
+    function(){ if(settled) return; settled=true; clearTimeout(t); load({name:'York, WA', lat:-31.8886, lon:116.7683}); },
+    {timeout:6000, maximumAge:300000}
+  );
+} else {
+  load({name:'York, WA', lat:-31.8886, lon:116.7683});
+}
+})();
+</script>
+</body>
+</html>
