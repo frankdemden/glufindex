@@ -488,10 +488,10 @@ function renderDtChart(){
   var zone=function(a,b,fill){
     return '<rect x="'+padL+'" y="'+y(b).toFixed(1)+'" width="'+w+'" height="'+(y(a)-y(b)).toFixed(1)+'" fill="'+fill+'"/>';
   };
-  var bands = zone(0,2,'rgba(227,166,60,.10)')
-            + zone(2,8,'rgba(79,184,107,.14)')
-            + zone(8,10,'rgba(227,166,60,.16)')
-            + zone(10,top,'rgba(208,96,76,.18)');
+  var bands = zone(0,2,'rgba(227,166,60,.45)')
+            + zone(2,8,'rgba(79,184,107,.55)')
+            + zone(8,10,'rgba(227,166,60,.70)')
+            + zone(10,top,'rgba(208,96,76,.80)');
   var marks='';
   [2,8,10].forEach(function(v){
     if(v>top) return;
